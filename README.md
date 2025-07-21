@@ -1,209 +1,177 @@
-# Docker MCP Gateway: Scaling AI Agents from Prototype to Production
+# Docker MCP Gateway: Production AI Agent Stack
 
-## From Fragmented Tools to Enterprise-Ready AI Infrastructure
-
-The Model Context Protocol (MCP) has revolutionized how AI agents connect to external tools and data sources. But there's a problem: while MCP servers are powerful in development, getting them production-ready has been a nightmare for developers and DevOps teams alike.
-
-Enter **Docker MCP Gateway** - Docker's open-source solution that transforms MCP from a collection of scattered tools into enterprise-grade AI infrastructure. Drawing from Docker's official [`compose-for-agents`](https://github.com/docker/compose-for-agents) templates and real-world enterprise implementations, this comprehensive guide explores how Docker MCP Gateway enables production-ready AI agent deployments.
-
-## The MCP Production Challenge: Why Current Solutions Fall Short
-
-### The Development vs. Production Gap
-
-Most developers start their MCP journey with simple configuration files like this:
-
-```json
-{
-  "mcpServers": {
-    "brave-search": {
-      "command": "npx",
-      "args": ["-y", "@brave-ai/brave-search"]
-    },
-    "filesystem": {
-      "command": "node",
-      "args": ["/path/to/filesystem-server.js"]
-    }
-  }
-}
-```
-
-This approach works great for prototyping, but it creates serious problems in production:
-
-- **Security vulnerabilities**: MCP servers run directly on the host system with minimal isolation
-- **Dependency chaos**: Managing Python, Node.js versions and dependencies across multiple servers
-- **Credential exposure**: API keys and secrets scattered across configuration files
-- **No observability**: Zero visibility into tool usage, performance, or errors
-- **Manual scaling**: Adding or removing tools requires config file edits and client restarts
-
-### Real-World Production Pain Points
-
-According to Docker's research, development teams face three critical barriers when moving MCP tools to production:
-
-1. **Security concerns**: 73% of enterprises are hesitant to deploy MCP tools due to inadequate isolation
-2. **Operational complexity**: Managing multiple MCP servers becomes exponentially complex at scale
-3. **Trust and governance**: No centralized way to control which tools agents can access
-
-## Docker MCP Gateway: The Enterprise Solution
-
-### What Makes Docker MCP Gateway Different
-
-Docker MCP Gateway fundamentally changes the MCP deployment model by introducing:
-
-**🔐 Security by Default**
-- All MCP servers run in isolated containers via Docker API socket
-- Docker secrets management - no plaintext credentials in configs
-- Restricted privileges, network access, and resource usage per server
-- Built-in secret injection without environment variable exposure
-
-**🎯 Unified Management** 
-- Single gateway container orchestrates multiple MCP servers dynamically
-- Docker API socket enables automatic server lifecycle management
-- Centralized configuration via command-line arguments and secrets
-- Hot-swapping of servers without gateway restarts
-
-**🔧 Intelligent Interceptors**
-- Transform and format tool outputs on-the-fly
-- Built-in jq support for JSON manipulation and CSV conversion
-- Custom data processing pipelines for better AI agent consumption
-- Filter, enhance, or simplify complex API responses
-
-**📊 Enterprise Observability**
-- Built-in monitoring, logging, and filtering for all managed servers
-- Full visibility into AI tool activity across dynamically started containers
-- Governance and compliance-ready audit trails with secret access tracking
-
-**⚡ Production-Ready Scalability**
-- Dynamic MCP server provisioning via Docker API
-- Easy horizontal scaling of the gateway itself
-- Multi-environment support with secrets-based configuration
-
-## Hands-On Tutorial: Building a Production MCP Gateway
-
-Let's implement a real-world example that demonstrates the power of Docker MCP Gateway, following the patterns established in Docker's official [`compose-for-agents`](https://github.com/docker/compose-for-agents) repository. We'll create a setup enhanced for production use with comprehensive agent capabilities including GitHub analysis, web research, and content creation.
-
-### Our Implementation vs. Standard Templates
-
-Our approach aligns with Docker's standard templates while adding enterprise features:
-
-| **Standard Example** | **Our Production Implementation** |
-|---------------------|----------------------------------|
-| Basic single-purpose agents | Multi-agent system (research, analysis, content creation) |
-| Single model configuration | Multiple model configurations with resource optimization |
-| Limited MCP server integration | Multiple MCP servers (GitHub, Brave, Wikipedia) with interceptors |
-| Simple `.mcp.env` | Enhanced secrets management with Docker secrets |
-| Basic compose.yaml | Production-ready compose with monitoring and scaling |
-
-### Project Structure
-
-```
-production-ai-agents/
-├── docker-compose.yml          # Main compose file
-├── .mcp.env                   # MCP secrets (standard format)
-├── agents.yaml                # Agent configurations
-├── agent/                     # Agent service implementation
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── app.py
-├── agent-ui/                  # Web interface
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-└── data/                      # Agent workspace
-    └── (runtime files)
-```
-
-**Key Components:**
-- **`.mcp.env` format**: Standard environment variable format for MCP credentials
-- **Models configuration**: Optimized qwen3 configurations with resource management
-- **MCP integration**: Uses standard `--servers=github-official,brave,wikipedia-mcp` pattern
-- **Compose structure**: Production-ready foundation with enterprise enhancements
+A complete, production-ready AI agent system using Docker MCP Gateway with multi-agent orchestration, intelligent interceptors, and enterprise security.
 
 ## Quick Start
 
-### 1. Clone and Setup (2 minutes)
+### Prerequisites
+- Docker Desktop 4.43+ or Docker Engine with Compose
+- GPU support (recommended) or Docker Offload access
+- API keys for services you want to use
+
+### 1. Clone and Setup
 ```bash
-git clone https://github.com/your-org/docker-mcp-gateway-blog
-cd docker-mcp-gateway-blog
+git clone https://github.com/your-username/docker-mcp-gateway-production
+cd docker-mcp-gateway-production
 
-# Set up secrets
+# Copy and configure secrets
 cp .mcp.env.example .mcp.env
-# Edit .mcp.env with your API keys
-
-# Start the stack
-docker compose up -d
 ```
 
-### 2. Test the Agents (1 minute)
+### 2. Add Your API Keys
+Edit `.mcp.env` with your credentials:
 ```bash
-# Test GitHub analysis agent
+# Required for GitHub analysis
+GITHUB_TOKEN=ghp_your_github_personal_access_token
+
+# Required for web search
+BRAVE_API_KEY=your_brave_search_api_key
+
+# Optional: For OpenAI models instead of local
+OPENAI_API_KEY=sk-your_openai_api_key
+```
+
+### 3. Start the Stack
+```bash
+# Start all services
+docker compose up -d
+
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f
+```
+
+### 4. Test the Agents
+Access the web UI at **http://localhost:3000** or use the API:
+
+```bash
+# List available agents
+curl http://localhost:7777/agents
+
+# Chat with GitHub analyst
 curl -X POST http://localhost:7777/chat \
   -H "Content-Type: application/json" \
   -d '{
     "agent_name": "github-analyst",
-    "message": "Analyze Docker MCP Gateway repository trends",
+    "message": "Analyze the Docker MCP Gateway repository",
     "tools": ["list_issues", "brave_web_search"]
   }'
 
-# Access the web UI
-open http://localhost:3000
+# Chat with research assistant
+curl -X POST http://localhost:7777/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_name": "research-assistant", 
+    "message": "Research the latest trends in AI agent development"
+  }'
 ```
 
-### 3. Production Deployment
-- Configure your models and resource allocation
-- Set up proper secrets management
-- Deploy using Docker Swarm or Kubernetes
-- Implement monitoring and alerting
+## Architecture
 
-## Cost Optimization
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web UI        │    │   Agent API     │    │  MCP Gateway    │
+│   (Port 3000)   │───▶│   (Port 7777)   │───▶│   (Port 8811)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+                                              ┌─────────▼─────────┐
+                                              │ Docker API Socket │
+                                              │ Dynamic MCP       │
+                                              │ Server Management │
+                                              └───────────────────┘
+                                                        │
+                                    ┌───────────────────┼───────────────────┐
+                                    ▼                   ▼                   ▼
+                            ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+                            │   GitHub    │    │    Brave    │    │  Wikipedia  │
+                            │ MCP Server  │    │ MCP Server  │    │ MCP Server  │
+                            └─────────────┘    └─────────────┘    └─────────────┘
+```
 
-Organizations deploying the complete Docker MCP Gateway + AI Agent stack report transformative improvements:
+## Available Agents
 
-**Infrastructure Efficiency:**
-- **67% reduction** in deployment time through Docker API automation and model pre-pulling
-- **45% fewer** security incidents due to Docker secrets and per-server container isolation  
-- **80% improvement** in AI agent response quality thanks to interceptors and structured data
-- **90% reduction** in credential management overhead with `.mcp.env` integration
-- **50% faster** development cycles with dynamic server provisioning
+### GitHub Analyst
+- **Model**: qwen3-medium
+- **Tools**: GitHub API, web search
+- **Purpose**: Repository analysis, issue tracking, strategic insights
 
-**AI Model Optimization:**
-- **60% reduction** in model switching time through Docker Model Runner
-- **40% improvement** in context utilization with optimized model configurations
-- **75% reduction** in GPU idle time through intelligent model scaling
+### Research Assistant  
+- **Model**: qwen3-small
+- **Tools**: Web search, Wikipedia, GitHub
+- **Purpose**: Comprehensive research across multiple sources
 
-## What's Next: The Future of AI Agent Infrastructure
+### Content Creator
+- **Model**: qwen3-small
+- **Tools**: Web search, Wikipedia, file operations
+- **Purpose**: Research-based content creation and documentation
 
-Docker MCP Gateway as part of a complete AI agent stack represents the next evolution of enterprise AI deployment. Upcoming features include:
+## Configuration
 
-**Enhanced Model Integration**
-- **Multi-cloud model deployment** with automatic failover
-- **Model mesh networking** for distributed inference
-- **Advanced model caching** and optimization strategies
+### Models
+Configure AI models in `docker-compose.yml`:
+```yaml
+models:
+  qwen3-small:
+    model: ai/qwen3:8B-Q4_0    # 4.44 GB
+    context_size: 15000        # 7 GB VRAM
+  qwen3-medium:
+    model: ai/qwen3:14B-Q6_K   # 11.28 GB
+    context_size: 15000        # 15 GB VRAM
+```
 
-**Intelligent Agent Orchestration**
-- **Agent workflow automation** with complex multi-step tasks
-- **Dynamic agent scaling** based on workload patterns
-- **Cross-agent collaboration** and task handoff capabilities
+### Agents
+Customize agent behaviors in `agents.yaml`:
+```yaml
+agents:
+  your-custom-agent:
+    name: "Your Custom Agent"
+    model: qwen3-small
+    tools:
+      - brave_web_search
+      - list_issues
+    system_prompt: |
+      Your custom instructions here...
+```
 
-**Enterprise Platform Features**
-- **Advanced analytics** and ML-powered optimization across the entire stack
-- **Enterprise integrations** with existing DevOps and MLOps toolchains
-- **Marketplace ecosystem** for certified AI agents and MCP tools
-- **Compliance frameworks** for regulated industries
+### MCP Servers
+Add or remove MCP servers in `docker-compose.yml`:
+```yaml
+command:
+  - --servers=github-official,brave,wikipedia-mcp,your-custom-server
+```
 
-## Conclusion: Complete AI Agent Infrastructure Made Simple
+## Key Features
 
-Docker MCP Gateway solves much more than MCP server orchestration - it enables complete AI agent infrastructure that's production-ready from day one. By combining secure tool access, intelligent model management, and scalable agent services, it provides everything organizations need to deploy sophisticated AI systems at enterprise scale.
+### 🔐 Security
+- **Docker secrets** for credential management
+- **Container isolation** for each MCP server
+- **No plaintext secrets** in configuration files
 
-The architecture we've demonstrated shows how easily you can create:
-- **Secure, isolated tool access** through containerized MCP servers
-- **Intelligent data transformation** via interceptors for better AI consumption  
-- **Scalable model inference** with Docker Model Runner integration
-- **Flexible agent behaviors** through configuration-driven development
-- **Enterprise-grade security** with Docker secrets and audit trails
+### 🔧 Intelligent Interceptors
+- **CSV formatting** for GitHub issues
+- **Data transformation** with jq processing
+- **Response optimization** for AI consumption
 
-Whether you're building AI-powered customer service systems, automated data analysis platforms, intelligent development assistants, or complex multi-agent workflows, this stack provides the foundation you need to succeed at scale - without compromising on security, performance, or operational simplicity.
+### 📊 Monitoring
+```bash
+# View MCP Gateway logs
+docker compose logs mcp-gateway
 
-The future of AI is agentic, and Docker MCP Gateway makes that future accessible today.
+# Monitor resource usage
+docker stats
 
+# Check dynamically created MCP servers
+docker ps --filter "label=mcp.gateway=true"
+```
 
+### ⚡ Scaling
+```bash
+# Scale agents horizontally
+docker compose up --scale agents=3
+
+# Scale with Docker Swarm
+docker stack deploy -c docker-compose.yml ai-agents
+```
 
