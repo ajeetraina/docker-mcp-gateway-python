@@ -205,8 +205,5 @@ Whether you're building AI-powered customer service systems, automated data anal
 
 The future of AI is agentic, and Docker MCP Gateway makes that future accessible today.
 
----
 
-**Ready to get started?** Visit the [Docker MCP Gateway GitHub repository](https://github.com/docker/mcp-gateway) and join the growing community of developers building the future of agentic AI.
 
-**Tags:** #Docker #MCP #ModelContextProtocol #AI #Agents #Production #Security #DevOps #Containerization #AIInfrastructure
