@@ -1,0 +1,92 @@
+
+services:
+  # MCP Gateway - Secures and orchestrates MCP servers
+  mcp-gateway:
+    image: docker/mcp-gateway:latest
+    ports:
+      - "8811:8811"
+    # Use Docker API socket to dynamically start MCP servers
+    use_api_socket: true
+    command:
+      - --transport=streaming
+      - --port=8811
+      # Securely embed secrets into the gateway
+      - --secrets=/run/secrets/mcp_secret
+      # Add any MCP servers you want to use
+      - --servers=github-official,brave,wikipedia-mcp
+      # Add interceptor to format GitHub issues as CSV
+      - --interceptor
+      - "after:exec:cat | jq '.content[0].text = (.content[0].text | fromjson | map(select(. != null) | [(.number // \"\"), (.state // \"\"), (.title // \"\"), (.user.login // \"\"), ((.labels // []) | map(.name) | join(\";\")), (.created_at // \"\")] | @csv) | join(\"\\n\"))'"
+      - --verbose=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data:ro
+    secrets:
+      - mcp_secret
+    networks:
+      - ai-network
+    restart: unless-stopped
+
+  # AI Models with Docker Model Runner
+  models:
+    qwen3-small:
+      # Pre-pull the model when starting Docker Model Runner
+      model: ai/qwen3:8B-Q4_0 # 4.44 GB
+      context_size: 15000 # 7 GB VRAM
+      # increase context size to handle larger results
+      # context_size: 41000 # 13 GB VRAM
+    qwen3-medium:
+      model: ai/qwen3:14B-Q6_K # 11.28 GB
+      context_size: 15000 # 15 GB VRAM
+      # increase context size to handle larger results
+      # context_size: 41000 # 21 GB VRAM
+
+  # AI Agents Service
+  agents:
+    image: demo/agents
+    build:
+      context: agent
+    ports:
+      - "7777:7777"
+    environment:
+      # Point agents at the MCP gateway
+      - MCPGATEWAY_URL=mcp-gateway:8811
+    volumes:
+      # Mount the agents configuration
+      - ./agents.yaml:/agents.yaml
+    models:
+      qwen3-small:
+        endpoint_var: MODEL_RUNNER_URL
+        model_var: MODEL_RUNNER_MODEL
+    depends_on:
+      - mcp-gateway
+    networks:
+      - ai-network
+    restart: unless-stopped
+
+  # Agent Web UI
+  agents-ui:
+    image: demo/ui
+    build:
+      context: agent-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - AGENTS_URL=http://localhost:7777
+    depends_on:
+      - agents
+    networks:
+      - ai-network
+    restart: unless-stopped
+
+secrets:
+  mcp_secret:
+    file: ./.mcp.env
+
+networks:
+  ai-network:
+    driver: bridge
+
+volumes:
+  model-cache:
+  agent-data:

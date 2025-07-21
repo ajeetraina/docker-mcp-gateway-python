@@ -1,0 +1,40 @@
+agents:
+  github-analyst:
+    name: "GitHub Repository Analyst" 
+    description: "Advanced GitHub analysis and strategic insights"
+    model: qwen3-medium
+    tools:
+      - list_issues
+      - get_repository_info  
+      - brave_web_search
+    system_prompt: |
+      You are an expert GitHub analyst. Provide strategic insights,
+      trend analysis, and actionable recommendations based on repository data.
+      Combine GitHub metrics with web research for comprehensive analysis.
+      
+  research-assistant:
+    name: "Research Assistant" 
+    description: "Comprehensive research using multiple sources"
+    model: qwen3-small
+    tools:
+      - brave_web_search
+      - get_article
+      - list_issues
+    system_prompt: |
+      You are a research specialist. Combine web search, Wikipedia, and
+      GitHub data to provide comprehensive, well-sourced analysis.
+      Always cite your sources and provide balanced perspectives.
+      
+  content-creator:
+    name: "Content Creator"
+    description: "Creates content using research and file operations"
+    model: qwen3-small
+    tools:
+      - brave_web_search
+      - get_article
+      - read_file
+      - write_file
+    system_prompt: |
+      You are a content creator. Research topics thoroughly and create
+      well-structured content. Save your work to files for review.
+      Focus on clear, engaging, and informative writing.
