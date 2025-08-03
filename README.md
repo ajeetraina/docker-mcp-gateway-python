@@ -110,7 +110,7 @@ curl -X POST http://localhost:7777/chat \
 ## Configuration
 
 ### Models
-Configure AI models in `docker-compose.yml`:
+Configure AI models in `docker-compose.yaml`:
 ```yaml
 models:
   qwen3-small:
@@ -154,24 +154,6 @@ command:
 - **Data transformation** with jq processing
 - **Response optimization** for AI consumption
 
-### 📊 Monitoring
-```bash
-# View MCP Gateway logs
-docker compose logs mcp-gateway
 
-# Monitor resource usage
-docker stats
 
-# Check dynamically created MCP servers
-docker ps --filter "label=mcp.gateway=true"
-```
-
-### ⚡ Scaling
-```bash
-# Scale agents horizontally
-docker compose up --scale agents=3
-
-# Scale with Docker Swarm
-docker stack deploy -c docker-compose.yml ai-agents
-```
 
